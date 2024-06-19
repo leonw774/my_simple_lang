@@ -1,0 +1,6 @@
+helloworld = 72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 0;
+print = string : {
+    << @string;
+    ($string != 0) ? print($string)
+};
+print(helloworld)
