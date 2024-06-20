@@ -17,9 +17,9 @@ python3 simple_lang.py -c "{some codes}"
 ## Data types
 
 There are 4 types of objects:
-- Number: implemented by python Fraction
+- Number: rational number implemented by Python `Fraction` class
 - Pair: store the references to two objects
-- Function: store executable codes
+- Function: store executable codes and an optional argument identifier
 - Null: same as python None type
 
 ## Operators
@@ -48,7 +48,7 @@ assignment operator `x = expr` requires the `x` at the left hand side to be a si
 
 The pair maker `,` makes a pair is right-associative, so that it can be used to make linked list. See example codes `fizzbuzz.txt` and `hello_world.txt`. Theoretically, you can also use pair object to make a binary tree, and thus a set and a map.
 
-Use ``x` and `~x` to get the left and right element of the pair.
+Use `` `x`` and `~x` to get the left and right element of the pair.
 
 ### Function maker and argument setter
 
