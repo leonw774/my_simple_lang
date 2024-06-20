@@ -1,0 +1,41 @@
+concat_linked_list = list_pair : {
+    left_list = `list_pair;
+    right_list = ~list_pair;
+    left_empty = (left_list == null);
+    left_empty ? (new_list = right_list);
+    !left_empty ? (
+        left_list_next = ~left_list;
+        end = (left_list_next == null);
+        end ? (
+            new_list = `left_list, right_list
+        );
+        !end ? (
+            new_list = (
+                `left_list,
+                concat_linked_list(left_list_next, ~list_pair)
+            )
+        )
+    );
+    new_list
+};
+
+print = string : {
+    << `string;
+    (~string != null) ? print(~string)
+};
+
+fizz = 70, 73, 90, 90, null;
+buzz = 66, 85, 90, 90, null;
+
+fizzbuzz = n : {
+    end = (n == 1); 
+    !end ? fizzbuzz(n-1);
+    res = null;
+    (n % 3 == 0) ? (res = concat_linked_list(res, fizz));
+    (n % 5 == 0) ? (res = concat_linked_list(res, buzz));
+    (res == null) ? (<< n + 48; << 10);
+    (res != null) ? (print(res); << 10);
+    null
+};
+
+fizzbuzz(10)

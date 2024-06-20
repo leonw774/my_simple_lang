@@ -1,13 +1,16 @@
 from typing import List, Callable
-from copy import copy
+from copy import copy 
 
 from lexer import Token
 from oper import *
 from eval_objs import *
 
 def do_call(func_obj: FuncObj, arg_obj: GeneralObj) -> GeneralObj:
-    init_id_obj_table = {func_obj.arg_id: arg_obj}
-    init_id_obj_table.update(func_obj.id_obj_table)
+    if func_obj.arg_id is not None:
+        init_id_obj_table = {func_obj.arg_id: arg_obj}
+        init_id_obj_table.update(func_obj.id_obj_table)
+    else:
+        init_id_obj_table = func_obj.id_obj_table.copy()
     return eval_node(
         func_obj.code_root_node,
         init_id_obj_table=init_id_obj_table
@@ -19,12 +22,12 @@ def do_write_byte(num_obj: NumObj) -> NullObj:
     return NullObj()
 
 op_func_configs = {
-    '!(': ((FuncObj, GeneralObj), do_call),
+    '$': ((FuncObj, GeneralObj), do_call),
     '!+': ((NumObj,),   lambda x: NumObj(x.value)),
     '!-': ((NumObj,),   lambda x: NumObj(-x.value)),
     '!': ((NumObj,),    lambda x: NumObj(x.value == 0)),
-    '@': ((PairObj,),   lambda x: copy(x.left)),
-    '$': ((PairObj,),   lambda x: copy(x.right)),
+    '`': ((PairObj,),   lambda x: x.left),
+    '~': ((PairObj,),   lambda x: x.right),
     '^': ((NumObj, NumObj), lambda x, y: NumObj(x.value ** y.value)),
     '*': ((NumObj, NumObj), lambda x, y: NumObj(x.value * y.value)),
     '/': ((NumObj, NumObj), lambda x, y: NumObj(x.value / y.value)),
@@ -39,17 +42,19 @@ op_func_configs = {
     '>=': ((NumObj, NumObj),    lambda x, y: NumObj(x.value >= y.value)),
     '==': ((GeneralObj, GeneralObj),    lambda x, y: NumObj(type(x) == type(y) and x == y)),
     '!=': ((GeneralObj, GeneralObj),    lambda x, y: NumObj(type(x) != type(y) or x != y)),
-    '&': ((Boolable, Boolable),     lambda x, y: NumObj(bool(x) and bool(y))),
-    '|': ((Boolable, Boolable),     lambda x, y: NumObj(bool(x) or bool(y))),
+    '&': ((GeneralObj, GeneralObj), lambda x, y: NumObj(bool(x) and bool(y))),
+    '|': ((GeneralObj, GeneralObj), lambda x, y: NumObj(bool(x) or bool(y))),
     ',': ((GeneralObj, GeneralObj), lambda x, y: PairObj(x, y)),
-    ';': ((GeneralObj, GeneralObj), lambda x, y: copy(y)),
+    ';': ((GeneralObj, GeneralObj), lambda x, y: y),
 }
 
 def op_func_builder(arg_types: tuple, real_func: Callable):
     def f(args):
-        assert len(args) == len(arg_types), (args, arg_types)
+        assert len(args) == len(arg_types), \
+            f'Bad argument number: want {len(arg_types)} but get {len(args)}'
         for arg, arg_type in zip(args, arg_types):
-            assert isinstance(arg, arg_type), (arg, arg_type)
+            assert isinstance(arg, arg_type), \
+                f'argument: {arg} is not of type {arg_type.__name__}'
         return real_func(*args)
     return f
 
@@ -77,7 +82,7 @@ def postfix_to_tree(postfix: List[str], is_debug=False) -> TreeNode:
             try:
                 l_node = stack.pop()
             except IndexError as e:
-                print('token {t} has too few children')
+                print(f'token {t} has too few children')
                 raise e
             stack.append(TreeNode(
                 tok=t.raw, node_type=t.type,
@@ -117,7 +122,15 @@ def eval_node(
         node = node_stack[-1]
         if node.type == 'op':
             if node.tok in unary_ops:
-                if node_eval_to[node.left] is None:
+                if node.tok == function_maker:
+                    node_eval_to[node] = FuncObj(
+                        code_root_node = node.left,
+                        id_obj_table=id_obj_table,
+                        arg_id=None
+                    )
+                    if g_is_debug:
+                        print('op', node, 'eval to:', node_eval_to[node])
+                elif node_eval_to[node.left] is None:
                     node_stack.append(node.left)
                     continue
                 else:
@@ -129,18 +142,21 @@ def eval_node(
                     if g_is_debug:
                         print('eval to:', node_eval_to[node])
             else:
-                if node.tok == function_declarator:
+                if node.tok == argument_setter:
                     assert node.left.type == 'id', \
-                        'Left side of function declarator should be identifier'
-                    node_eval_to[node] = FuncObj(
-                        node.left.tok,
-                        node.right,
-                        id_obj_table
-                    )
+                        'Left side of argument setter should be identifier'
+                    if node_eval_to[node.right] is None:
+                        node_stack.append(node.right)
+                        continue
+                    else:
+                        assert isinstance(node_eval_to[node.right], FuncObj), \
+                            'Right side of argument setter should be function block'
+                        node_eval_to[node] = copy(node_eval_to[node.right])
+                        node_eval_to[node].arg_id = node.left.tok
 
                 elif node.tok == assignment:
                     assert node.left is not None and node.left.type == 'id', \
-                        'Left side of assignment should be identifier'
+                        f'Left side of assignment should be identifier. Get {node.left}'
                     if node_eval_to[node.right] is None:
                         node_stack.append(node.right)
                         continue
@@ -150,7 +166,7 @@ def eval_node(
                         if g_is_debug:
                             print('update id-obj table:', id_obj_table)
 
-                elif node.tok == branch_operator:
+                elif node.tok == if_operator:
                     # eval left first
                     if node_eval_to[node.left] is None:
                         node_stack.append(node.left)
@@ -163,7 +179,9 @@ def eval_node(
                             else:
                                 node_eval_to[node] = node_eval_to[node.right]
                         else:
-                            node_eval_to[node] = NullObj()
+                            node_eval_to[node] = node_eval_to[node.left]
+                        if g_is_debug:
+                            print('op', node, 'eval to:', node_eval_to[node])
 
                 elif node_eval_to[node.left] is None and node_eval_to[node.right] is None:
                     node_stack.append(node.right)

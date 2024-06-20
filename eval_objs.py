@@ -15,7 +15,7 @@ class TreeNode:
         self.eval_to: Optional[GeneralObj] = None
 
     def __repr__(self):
-        return f'Node({self.type}:{repr(self.tok)})'
+        return f'N({self.type}:{repr(self.tok)})'
 
     @classmethod
     def dump(cls, root_node, indent = 2) -> str:
@@ -32,25 +32,26 @@ class TreeNode:
                 queue.append((node.left, depth + indent))
         return res_str
 
-
-class Boolable(GeneralObj):
-    def __bool__(self) -> bool:
-        return bool(self.value)
-    
-    def __eq__(self, other) -> bool:
-        return self.value == other.value
-
-class NullObj(Boolable):
+class NullObj(GeneralObj):
     def __init__(self) -> None:
         self.value = None
     
+    def __bool__(self) -> bool:
+        return False
+    
     def __repr__(self) -> str:
-        return 'null'
+        return 'NullObj'
 
-class NumObj(Boolable):
+    def __eq__(self, other) -> bool:
+        return self.value == other.value
+
+class NumObj(GeneralObj):
     def __init__(self, init_value: Union[float, Decimal, str]) -> None:
         self.value = Fraction(init_value)
     
+    def __bool__(self) -> bool:
+        return self.value != 0
+
     def __repr__(self) -> str:
         return (
             repr(int(self.value))
@@ -58,18 +59,24 @@ class NumObj(Boolable):
             repr(float(self.value))
         )
 
+    def __eq__(self, other) -> bool:
+        return self.value == other.value
+
 class FuncObj(GeneralObj):
     def __init__(
             self,
-            arg_id: str,
             code_root_node: TreeNode,
-            id_obj_table: dict) -> None:
+            id_obj_table: dict,
+            arg_id: Optional[str] = None) -> None:
         self.arg_id = arg_id
         self.code_root_node = code_root_node
         # the reference of the id-obj table at the same scope of the function
         # so that it can so recursion and access variable from outside
         self.id_obj_table = id_obj_table
     
+    def __bool__(self) -> bool:
+        return True
+
     def __repr__(self) -> str:
         return f'[function {self.arg_id} : code root {self.code_root_node}]'
     
@@ -81,6 +88,9 @@ class PairObj(GeneralObj):
         self.left = init_left
         self.right = init_right
     
+    def __bool__(self) -> bool:
+        return True
+
     def __repr__(self) -> str:
         return f'({self.left}, {self.right})'
 

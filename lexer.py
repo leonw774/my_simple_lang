@@ -1,18 +1,18 @@
 from oper import *
 from typing import List, Literal
 
-uanry_pm_preced = set(op_precedence).difference(r_brackets).union([None])
+uanry_pm_preced = set(all_ops).difference(r_brackets).union([None])
 
 id_chars = set('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM_')
 lit_chars = set('0123456789.')
-op_chars = set(r''.join([ops for ops in op_precedence]))
+op_chars = set(r''.join([ops for ops in all_ops]))
 ws_chars = set(' \t\r\n\0')
 
 states = {
     'id',
     'lit', # literal
     'op', # operator
-    'ws' # white space
+    'ws', # white space
 }
 
 token_types = {
@@ -27,15 +27,25 @@ class Token:
         self.type = tok_type
     
     def __repr__(self) -> str:
-        return f'Token({self.type}:{repr(self.raw)})'
+        return f'T({self.type}:{repr(self.raw)})'
 
 def parse_token(raw_str: str, is_debug=False) -> List[str]:
+    is_comment = False
     st = 'ws'
     q = ''
     output: List[Token] = []
     for n, c in enumerate(raw_str):
         if is_debug:
             print(st, repr(c), sep='\t')
+        
+        if c == '#':
+            is_comment = True
+            st == 'ws'
+        if is_comment:
+            if c == '\n':
+                is_comment = False
+            continue
+        
         if st == 'ws':
             if c in ws_chars:
                 pass
@@ -53,7 +63,11 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
                     q = '!' + c
                 # handle function call
                 elif c == '(' and (last.type != 'op' or last.raw in r_brackets):
-                    q = function_caller
+                    q = function_call_l_parenth
+                elif c == ')' and last.raw == '$(':
+                    # add the inferred null
+                    output.append(Token('null', 'id'))
+                    q = c
                 else:
                     q = c
 
@@ -70,7 +84,7 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
                 q = c
                 # handle function call
                 if c == '(':
-                    q = function_caller
+                    q = function_call_l_parenth
                 else:
                     q = c
         
@@ -105,18 +119,20 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
                 st = 'lit'
                 q = c
             elif op_chars:
-                if (q + c) in op_precedence:
+                if (q + c) in all_ops:
                     q += c
                 else:
                     output.append(Token(q, st))
                     # handle unary + -
                     if (c == '-' or c == '+') and q not in r_brackets:
                         q = '!' + c
-                    else:
-                        q = c
                     # handle function call
-                    if c == '(' and q in r_brackets:
-                        q = function_caller
+                    elif c == '(' and q in r_brackets:
+                        q = function_call_l_parenth
+                    elif c == ')' and q == '$(':
+                        # add the inferred null
+                        output.append(Token('null', 'id'))
+                        q = c
                     else:
                         q = c
         if is_debug:
