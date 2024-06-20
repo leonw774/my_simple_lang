@@ -48,7 +48,7 @@ assignment operator `x = expr` requires the `x` at the left hand side to be a si
 
 The pair maker `,` makes a pair is right-associative, so that it can be used to make linked list. See example codes `fizzbuzz.txt` and `hello_world.txt`. Theoretically, you can also use pair object to make a binary tree, and thus a set and a map.
 
-Use `` `x`` and `~x` to get the left and right element of the pair.
+Use `` `x `` and `~x` to get the left and right element of the pair.
 
 ### Function maker and argument setter
 
@@ -66,7 +66,7 @@ The function caller are `()` and `$`. The syntax is `func_name(expr)` and `func_
 
 ### Expression connector
 
-The expression connector is `;`. It connects two expression and evaluates to the later one.
+The expression connector is `;`. It connects two expressions into one and evaluates to the later one.
 
 ### stdout writer
 
@@ -75,3 +75,7 @@ The `<<` operation output a number as a byte to the stdout (actually via Python 
 ## Variables
 
 Variables identifier complies in regex `[_a-zA-z][_a-zA-z0-9]+`. Variables can be used without being assigned first and are default to be null. For example, code `b = 2; a == b` is valid and evaluates to `0` because `null` does not equal to number `2`.
+
+## Expression
+
+All the codes, including those wrapped in function maker `{}`, should a signle expression and evaluates to one object eventually.   
