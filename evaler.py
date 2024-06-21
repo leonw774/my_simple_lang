@@ -1,3 +1,4 @@
+import sys
 from typing import List, Callable
 from copy import copy 
 
@@ -18,7 +19,10 @@ def do_call(func_obj: FuncObj, arg_obj: GeneralObj) -> GeneralObj:
 
 def do_write_byte(num_obj: NumObj) -> NullObj:
     assert num_obj.value.denominator == 1
-    print(chr(int(num_obj.value)), end='')
+    v = int(num_obj.value)
+    assert 0 <= v <= 255
+    sys.stdout.buffer.write(bytes((v,)))
+    sys.stdout.flush()
     return NullObj()
 
 op_func_configs = {
