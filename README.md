@@ -1,6 +1,6 @@
-# my_simple_lang
+# Lreŋ
 
-My simple programming language written in Python
+My simple programming language written in Python. Temporarily named "Lreŋ".
 
 ## Usage
 
