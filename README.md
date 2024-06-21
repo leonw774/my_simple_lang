@@ -5,13 +5,13 @@ My simple programming language written in Python. Temporarily named "Lreŋ".
 ## Usage
 
 ```
-python3 simple_lang.py {file_path}
+python3 lreng.py {file_path}
 ```
 
 or
 
 ```
-python3 simple_lang.py -c "{some codes}"
+python3 lreng.py -c "{some codes}"
 ```
 
 ## Data types
