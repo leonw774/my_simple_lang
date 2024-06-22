@@ -74,7 +74,7 @@ The `<<` operation outputs a number as a byte to the stdout. This operator alway
 
 ## Variables
 
-Variable identifiers should match regex `[_A-z][_A-z0-9]+`. Variables can be used without being assigned first and are default to be null. For example, code `b = 2; a == b` is valid and evaluates to `0` because `null` does not equal the number `2`.
+Variable identifiers should match regex `[_A-Za-z][_A-Za-z0-9]+`. Variables can be used without being assigned first and are default to be null. For example, code `b = 2; a == b` is valid and evaluates to `0` because `null` does not equal the number `2`.
 
 ## Expression
 
