@@ -18,6 +18,9 @@ python3 lreng.py -c "{some codes}"
 
 There are 4 types of objects:
 - Number: rational number implemented by Python `Fraction` class
+  - You can represent numbers in decimal with point: `3.14159`
+  - You can represent integers in binary, heximal: `0b110011`, `0xc0de`
+  - You can represent the code of printable and escapable ASCIIs. For example, `A` evaluates to `65`, `\\` is `92`, and `'\n'` is `10`
 - Pair: store the references to two objects
 - Function: store an executable code and an optional argument identifier
 - Null: same as python None type

@@ -24,8 +24,8 @@ print = string : {
     (~string != null) ? print(~string)
 };
 
-fizz = 70, 73, 90, 90, null;
-buzz = 66, 85, 90, 90, null;
+fizz = 'F', 'I', 'Z', 'Z', null;
+buzz = 'B', 'U', 'Z', 'Z', null;
 
 fizzbuzz = n : {
     end = (n == 1); 
@@ -33,8 +33,8 @@ fizzbuzz = n : {
     res = null;
     (n % 3 == 0) ? (res = concat_linked_list(res, fizz));
     (n % 5 == 0) ? (res = concat_linked_list(res, buzz));
-    (res == null) ? (<< n + 48; << 10);
-    (res != null) ? (print(res); << 10);
+    (res == null) ? (<< n + '0'; << '\n');
+    (res != null) ? (print(res); << '\n');
     null
 };
 

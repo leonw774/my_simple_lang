@@ -18,7 +18,7 @@ def do_call(func_obj: FuncObj, arg_obj: GeneralObj) -> GeneralObj:
     )
 
 def do_write_byte(num_obj: NumObj) -> NullObj:
-    assert num_obj.value.denominator == 1
+    assert num_obj.value.denominator == 1, num_obj.value
     v = int(num_obj.value)
     assert 0 <= v <= 255
     sys.stdout.buffer.write(bytes((v,)))
@@ -207,7 +207,7 @@ def eval_node(
                 print('update id-obj table:', id_obj_table)
             node_eval_to[node] = obj
 
-        elif node.type == 'lit':
+        elif node.type == 'num':
             node_eval_to[node] = NumObj(node.tok)
 
         else:

@@ -1,28 +1,48 @@
 from oper import *
+from string import ascii_letters, digits, printable, whitespace
 from typing import List, Literal
 
 uanry_pm_preced = set(all_ops).difference(r_brackets).union([None])
 
-id_chars = set('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM_')
-lit_chars = set('0123456789.')
+id_chars = set(ascii_letters + digits + '_')
+num_chars = set(digits + '.')
 op_chars = set(r''.join([ops for ops in all_ops]))
-ws_chars = set(' \t\r\n\0')
+ws_chars = set(whitespace + '\0')
 
 states = {
     'id',
-    'lit', # literal
+    'num', # number
+    'ch', # number in ascii character
     'op', # operator
     'ws', # white space
+    'end'
 }
+
+number_hex = '0x'
+number_bin = '0b'
+hex_chars = set(digits + 'ABCDEFabcdef')
+bin_chars = set('01')
+
+esc_table = {
+    'a': '\a',
+    'b': '\b',
+    'n': '\n',
+    'r': '\r',
+    't': '\t',
+    'v': '\v',
+    '\\': '\\',
+    '\'': '\''
+}
+esc_chars = set(esc_table)
 
 token_types = {
     'id',
-    'lit', # literal
+    'num', # number
     'op', # operator
 }
 
 class Token:
-    def __init__(self, raw, tok_type: Literal['id', 'lit', 'op']) -> None:
+    def __init__(self, raw, tok_type: Literal['id', 'num', 'op']) -> None:
         self.raw = raw
         self.type = tok_type
     
@@ -31,9 +51,11 @@ class Token:
 
 def parse_token(raw_str: str, is_debug=False) -> List[str]:
     is_comment = False
+    ch_escaping = False
     st = 'ws'
     q = ''
     output: List[Token] = []
+    raw_str = raw_str.strip() + '\0'
     for n, c in enumerate(raw_str):
         if is_debug:
             print(st, repr(c), sep='\t')
@@ -49,9 +71,12 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
         if st == 'ws':
             if c in ws_chars:
                 pass
-            elif c in lit_chars:
-                st = 'lit'
+            elif c in num_chars:
+                st = 'num'
                 q = c
+            elif c == '\'':
+                st = 'ch'
+                q = ''
             elif c in id_chars:
                 st = 'id'
                 q = c
@@ -74,10 +99,15 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
         elif st == 'id':
             if c in ws_chars:
                 output.append(Token(q, st))
+                if c == '\0':
+                    break
                 st = 'ws'
                 q = ''
-            elif c in id_chars or c in lit_chars:
+            elif c in id_chars:
                 q += c
+            elif c == '\'':
+                st = 'ch'
+                q = ''
             elif c in op_chars:
                 output.append(Token(q, st))
                 st = 'op'
@@ -88,35 +118,90 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
                 else:
                     q = c
         
-        elif st == 'lit':
+        elif st == 'num':
             if c in ws_chars:
+                if q.startswith((number_bin, number_hex)):
+                    q = str(int(q, base=0))
                 output.append(Token(q, st))
+                if c == '\0':
+                    break
                 st = 'ws'
                 q = ''
-            elif c in id_chars:
-                raise ValueError(f'bad charactor at index {n}: {c}')
-            elif c in lit_chars:
+            elif c in num_chars:
                 if c == '.' and '.' in q:
-                    raise ValueError(f'bad charactor at index {n}: {c}')
+                    raise ValueError(f'Bad charactor for number {q}: {c}')
                 else:
                     q += c
+            elif c in id_chars:
+                if (q + c == number_hex
+                        or (q + c)[:2] == number_hex and c in hex_chars
+                        or q + c == number_bin):
+                    q += c
+                else:
+                    raise ValueError(f'Bad charactor for number {q}: {c}')
+            elif c == '\'':
+                raise ValueError(f'Bad charactor at for number {q}: {c}')
             elif op_chars:
+                if q.startswith((number_bin, number_hex)):
+                    q = str(int(q, base=0))
                 output.append(Token(q, st))
                 st = 'op'
                 q = c
         
+        elif st == 'ch':
+            if len(q) == 0:
+                if c == '\\':
+                    if ch_escaping:
+                        ch_escaping = False
+                        q = c
+                    else:
+                        ch_escaping = True
+                elif c in esc_chars:
+                    if ch_escaping:
+                        ch_escaping = False
+                        q = esc_table[c]
+                    else:
+                        raise ValueError(f'No character in quote')
+                elif c in printable:
+                    q = c
+                else:
+                    raise ValueError(f'Bad charactor for ascii charactor: {repr(c)}')
+            elif len(q) == 1:
+                if c in ws_chars:
+                    if c == '\0':
+                        break
+                    st = 'ws'
+                    q = ''
+                elif c in num_chars:
+                    st = 'num'
+                    q = c
+                elif c == '\'':
+                    output.append(Token(ord(q), 'num'))
+                elif c in id_chars:
+                    st = 'id'
+                    q = c
+                elif op_chars:
+                    st = 'op'
+                    q = c
+
         elif st == 'op':
             if c in ws_chars:
                 output.append(Token(q, st))
+                if c == '\0':
+                    break
                 st = 'ws'
+                q = ''
+            elif c in num_chars:
+                output.append(Token(q, st))
+                st = 'num'
+                q = c
+            elif c == '\'':
+                output.append(Token(q, st))
+                st = 'ch'
                 q = ''
             elif c in id_chars:
                 output.append(Token(q, st))
                 st = 'id'
-                q = c
-            elif c in lit_chars:
-                output.append(Token(q, st))
-                st = 'lit'
                 q = c
             elif op_chars:
                 if (q + c) in all_ops:
@@ -137,11 +222,6 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
                         q = c
         if is_debug:
             print(repr(q), output, sep='\t')
-    if len(q):
-        output.append(Token(q, st))
-    if is_debug:
-        print(st, repr('<end>'), sep='\t')
-        print(repr(q), output, sep='\t')
     return output
 
     
