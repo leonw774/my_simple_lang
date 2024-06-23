@@ -1,6 +1,6 @@
 # Lreŋ
 
-My simple programming language written in Python. Temporarily named "Lreŋ".
+A simple interpreted programming language written in Python.
 
 ## Usage
 
