@@ -1,7 +1,15 @@
 from argparse import ArgumentParser
 from lexer import parse_token
 from postfixer import shunting_yard
-from evaler import eval_postfix
+from evaler import eval_postfix, GeneralObj
+
+def interpret_code(raw_str: str, is_debug: bool = False) -> GeneralObj:
+    tokens = parse_token(raw_str, is_debug=is_debug)
+    postfix = shunting_yard(tokens, is_debug=is_debug)
+    eval_result = eval_postfix(postfix, is_debug=is_debug)
+    if is_debug:
+        print('eval_result:', eval_result)
+    return eval_result
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -16,9 +24,6 @@ if __name__ == '__main__':
     elif args.raw_str != '':
         raw_str = args.raw_str
     if raw_str is None:
+        ValueError('code is empty')
         exit()
-    tokens = parse_token(raw_str, is_debug=args.debug)
-    postfix = shunting_yard(tokens, is_debug=args.debug)
-    eval_result = eval_postfix(postfix, is_debug=args.debug)
-    if args.debug:
-        print('eval_result:', eval_result)
+    interpret_code(raw_str)

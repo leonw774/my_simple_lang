@@ -60,7 +60,7 @@ class NumObj(GeneralObj):
         )
 
     def __eq__(self, other) -> bool:
-        return self.value == other.value
+        return type(other) == type(self) and self.value == other.value
 
 class FuncObj(GeneralObj):
     def __init__(
@@ -80,8 +80,11 @@ class FuncObj(GeneralObj):
     def __repr__(self) -> str:
         return f'[function {self.arg_id} : code root {self.code_root_node}]'
     
-    def __eq__(self, other) -> bool:
-        return self.code_root_node == other.code_root_node
+    def __eq__(self, other) -> bool: 
+        return (
+            type(other) == type(self)
+            and self.code_root_node == other.code_root_node
+        )
 
 class PairObj(GeneralObj):
     def __init__(self, init_left: GeneralObj, init_right: GeneralObj) -> None:
@@ -95,4 +98,8 @@ class PairObj(GeneralObj):
         return f'({self.left}, {self.right})'
 
     def __eq__(self, other) -> bool:
-        return self.left == other.left and self.right == other.right 
+        return (
+            type(other) == type(self)
+            and self.left == other.left
+            and self.right == other.right
+        )

@@ -24,6 +24,20 @@ print = string : {
     (~string != null) ? print(~string)
 };
 
+format_int = i : {
+    end = i < 10;
+    res_str = null;
+    end ? (
+        res_str = (i + '0'), null
+    );
+    !end ? (
+        left = format_int((i - i % 10) / 10);
+        right = ((i % 10) + '0'), null;
+        res_str = concat_linked_list(left, right)
+    );
+    res_str
+};
+
 fizz = 'F', 'I', 'Z', 'Z', null;
 buzz = 'B', 'U', 'Z', 'Z', null;
 
@@ -33,9 +47,9 @@ fizzbuzz = n : {
     res = null;
     (n % 3 == 0) ? (res = concat_linked_list(res, fizz));
     (n % 5 == 0) ? (res = concat_linked_list(res, buzz));
-    (res == null) ? (<< n + '0'; << '\n');
-    (res != null) ? (print(res); << '\n');
-    null
+    (res == null) ? print(format_int(n));
+    (res != null) ? print(res);
+    << '\n'
 };
 
-fizzbuzz(10)
+fizzbuzz(15)

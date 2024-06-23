@@ -27,25 +27,25 @@ def do_write_byte(num_obj: NumObj) -> NullObj:
 
 op_func_configs = {
     '$': ((FuncObj, GeneralObj), do_call),
-    '!+': ((NumObj,),   lambda x: NumObj(x.value)),
-    '!-': ((NumObj,),   lambda x: NumObj(-x.value)),
-    '!': ((NumObj,),    lambda x: NumObj(x.value == 0)),
-    '`': ((PairObj,),   lambda x: x.left),
-    '~': ((PairObj,),   lambda x: x.right),
+    '!+': ((NumObj,), lambda x: NumObj(x.value)),
+    '!-': ((NumObj,), lambda x: NumObj(-x.value)),
+    '!': ((NumObj,), lambda x: NumObj(x.value == 0)),
+    '`': ((PairObj,), lambda x: x.left),
+    '~': ((PairObj,), lambda x: x.right),
     '^': ((NumObj, NumObj), lambda x, y: NumObj(x.value ** y.value)),
     '*': ((NumObj, NumObj), lambda x, y: NumObj(x.value * y.value)),
     '/': ((NumObj, NumObj), lambda x, y: NumObj(x.value / y.value)),
     '%': ((NumObj, NumObj), lambda x, y: NumObj(x.value % y.value)),
     '+': ((NumObj, NumObj), lambda x, y: NumObj(x.value + y.value)),
     '-': ((NumObj, NumObj), lambda x, y: NumObj(x.value - y.value)),
-    '<<': ((NumObj,),   do_write_byte),
-    '>>': ((NumObj,),   lambda x: NotImplementedError()),
+    '<<': ((NumObj,), do_write_byte),
+    # '>>': ((NumObj,), lambda x: NotImplementedError()),
     '<': ((NumObj, NumObj), lambda x, y: NumObj(x.value < y.value)),
     '>': ((NumObj, NumObj), lambda x, y: NumObj(x.value > y.value)),
-    '<=': ((NumObj, NumObj),    lambda x, y: NumObj(x.value <= y.value)),
-    '>=': ((NumObj, NumObj),    lambda x, y: NumObj(x.value >= y.value)),
-    '==': ((GeneralObj, GeneralObj),    lambda x, y: NumObj(type(x) == type(y) and x == y)),
-    '!=': ((GeneralObj, GeneralObj),    lambda x, y: NumObj(type(x) != type(y) or x != y)),
+    '<=': ((NumObj, NumObj), lambda x, y: NumObj(x.value <= y.value)),
+    '>=': ((NumObj, NumObj), lambda x, y: NumObj(x.value >= y.value)),
+    '==': ((GeneralObj, GeneralObj), lambda x, y: NumObj(x == y)),
+    '!=': ((GeneralObj, GeneralObj), lambda x, y: NumObj(x != y)),
     '&': ((GeneralObj, GeneralObj), lambda x, y: NumObj(bool(x) and bool(y))),
     '|': ((GeneralObj, GeneralObj), lambda x, y: NumObj(bool(x) or bool(y))),
     ',': ((GeneralObj, GeneralObj), lambda x, y: PairObj(x, y)),
@@ -154,13 +154,15 @@ def eval_node(
                         continue
                     else:
                         assert isinstance(node_eval_to[node.right], FuncObj), \
-                            'Right side of argument setter should be function block'
+                            'Right side of argument setter should be '\
+                            'function block'
                         node_eval_to[node] = copy(node_eval_to[node.right])
                         node_eval_to[node].arg_id = node.left.tok
 
                 elif node.tok == assignment:
                     assert node.left is not None and node.left.type == 'id', \
-                        f'Left side of assignment should be identifier. Get {node.left}'
+                        'Left side of assignment should be identifier. ' \
+                        f'Get {node.left}'
                     if node_eval_to[node.right] is None:
                         node_stack.append(node.right)
                         continue
@@ -187,7 +189,8 @@ def eval_node(
                         if g_is_debug:
                             print('op', node, 'eval to:', node_eval_to[node])
 
-                elif node_eval_to[node.left] is None and node_eval_to[node.right] is None:
+                elif (node_eval_to[node.left] is None
+                        and node_eval_to[node.right] is None):
                     node_stack.append(node.right)
                     node_stack.append(node.left)
                     continue

@@ -12,8 +12,7 @@ operator_hierarchies = [
     ('*', '/', '%'),
     # addition, subtraction
     ('+', '-'),
-    # write a byte to stdout and return null, read a byte from stdin (not implemented yet)
-    # ('<<', '>>'),
+    # write a byte to stdout and return null
     ('<<', ),
     # inequality comparisons
     ('<', '<=', '>', '>='),

@@ -87,7 +87,8 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
                 if (c == '-' or c == '+') and last.raw in uanry_pm_preced:
                     q = '!' + c
                 # handle function call
-                elif c == '(' and (last.type != 'op' or last.raw in r_brackets):
+                elif (c == '('
+                        and (last.type != 'op' or last.raw in r_brackets)):
                     q = function_call_l_parenth
                 elif c == ')' and last.raw == '$(':
                     # add the inferred null
@@ -165,7 +166,7 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
                 elif c in printable:
                     q = c
                 else:
-                    raise ValueError(f'Bad charactor for ascii charactor: {repr(c)}')
+                    raise ValueError(f'Bad ascii charactor: {repr(c)}')
             elif len(q) == 1:
                 if c in ws_chars:
                     if c == '\0':
