@@ -151,22 +151,21 @@ def parse_token(raw_str: str, is_debug=False) -> List[str]:
         
         elif st == 'ch':
             if len(q) == 0:
-                if c == '\\':
-                    if ch_escaping:
-                        ch_escaping = False
+                if ch_escaping:
+                    if c == '\\':
                         q = c
-                    else:
-                        ch_escaping = True
-                elif c in esc_chars:
-                    if ch_escaping:
-                        ch_escaping = False
+                    elif c in esc_chars:
                         q = esc_table[c]
                     else:
-                        raise ValueError(f'No character in quote')
-                elif c in printable:
-                    q = c
+                        raise ValueError(f'Bad escape charactor: {repr(c)}')
+                    ch_escaping = False
                 else:
-                    raise ValueError(f'Bad ascii charactor: {repr(c)}')
+                    if c == '\\':
+                        ch_escaping = True
+                    elif c in printable:
+                        q = c
+                    else:
+                        raise ValueError(f'Bad ascii charactor: {repr(c)}')
             elif len(q) == 1:
                 if c in ws_chars:
                     if c == '\0':

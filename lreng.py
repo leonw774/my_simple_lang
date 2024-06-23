@@ -26,4 +26,4 @@ if __name__ == '__main__':
     if raw_str is None:
         ValueError('code is empty')
         exit()
-    interpret_code(raw_str)
+    interpret_code(raw_str, args.debug)
