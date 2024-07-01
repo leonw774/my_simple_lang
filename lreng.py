@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
-from lexer import parse_token
-from postfixer import shunting_yard
-from evaler import eval_postfix, GeneralObj
+from lreng_lexer import parse_token
+from lreng_parser import shunting_yard
+from lreng_evaler import eval_postfix, GeneralObj
 
 def interpret_code(raw_str: str, is_debug: bool = False) -> GeneralObj:
     tokens = parse_token(raw_str, is_debug=is_debug)

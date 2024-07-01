@@ -82,3 +82,23 @@ Variable identifiers should match regex `[_A-Za-z][_A-Za-z0-9]+`. Variables can 
 ## Expression
 
 All the codes, including those wrapped in function maker `{}`, should be a single expression and evaluated to one object eventually.   
+
+## Closure
+
+Functions hold a reference of the outer layer of frame when it is called. It effects the currying if the deeper function use the variables outside of it. For example, in `example/frames.txt` we have this code:
+
+```
+foo = a : {
+  b : {
+    a + b + c 
+  }
+};
+c = 3;
+bar = foo(1);
+a = 8;
+b = 5;
+c = 2;
+<< bar(2) + '0'
+```
+
+The function `bar = foo(1)` obtain the reference of the outer frames when `c` equals `3`. But when we call `bar` after setting `a` to `8`, `b` to `5`, and `c` to `2`, we get `5`. It is because the function finds variable value from bottom to up, which means that `bar` find variable `a`, set to `1` as the argument, in the `foo(1)` level, `b` in this own level, set to `2` as the argument, and `c` in the highest level where we modified the value from `3` to `2`.

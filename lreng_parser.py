@@ -1,7 +1,7 @@
 from typing import List
 
-from lexer import Token
-from oper import *
+from lreng_lexer import Token
+from lreng_opers import *
 
 def shunting_yard(
         tokens: List[Token],

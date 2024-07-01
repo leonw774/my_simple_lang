@@ -1,20 +1,21 @@
 import sys
-from typing import List, Callable
+from typing import Callable
 from copy import copy 
 
-from lexer import Token
-from oper import *
-from eval_objs import *
+from lreng_lexer import Token
+from lreng_opers import *
+from lreng_objs import *
 
 def do_call(func_obj: FuncObj, arg_obj: GeneralObj) -> GeneralObj:
-    if func_obj.arg_id is not None:
-        init_id_obj_table = {func_obj.arg_id: arg_obj}
-        init_id_obj_table.update(func_obj.id_obj_table)
-    else:
-        init_id_obj_table = func_obj.id_obj_table.copy()
+    # copy frame
+    currernt_frame = Frame(
+        local={func_obj.arg_id: arg_obj},
+        source=func_obj.id_obj_table
+    )
+    # call function
     return eval_node(
         func_obj.code_root_node,
-        init_id_obj_table=init_id_obj_table
+        inherent_id_obj_table=currernt_frame
     )
 
 def do_write_byte(num_obj: NumObj) -> NullObj:
@@ -68,7 +69,7 @@ op_funcs = {
 }
 
 
-def eval_postfix(postfix_token: List[Token], is_debug=False) -> GeneralObj:
+def eval_postfix(postfix_token: list[Token], is_debug=False) -> GeneralObj:
     tree_root = postfix_to_tree(postfix_token, is_debug=is_debug)
     if is_debug:
         print(TreeNode.dump(tree_root))
@@ -76,7 +77,7 @@ def eval_postfix(postfix_token: List[Token], is_debug=False) -> GeneralObj:
     g_is_debug = is_debug
     return eval_node(tree_root)
 
-def postfix_to_tree(postfix: List[str], is_debug=False) -> TreeNode:
+def postfix_to_tree(postfix: list[str], is_debug=False) -> TreeNode:
     stack = list()
     for t in postfix:
         if is_debug:
@@ -110,16 +111,18 @@ class NodeEvalDict:
 
 def eval_node(
         root_node: TreeNode,
-        init_id_obj_table = None) -> GeneralObj:
-    id_obj_table = {'null': NullObj()}
-    if init_id_obj_table is not None:
-        id_obj_table.update(init_id_obj_table)
+        inherent_id_obj_table: Frame | None = None) -> GeneralObj:
+    if inherent_id_obj_table is None:
+        id_obj_table = Frame(local={'null': NullObj()})
+    else:
+        assert isinstance(inherent_id_obj_table, Frame)
+        id_obj_table = inherent_id_obj_table
     if g_is_debug:
         print('initial id_obj_table:', id_obj_table)
 
     node_eval_to = NodeEvalDict()
 
-    node_stack: List[TreeNode] = [root_node]
+    node_stack: list[TreeNode] = [root_node]
     while len(node_stack):
         if g_is_debug:
             print('stack', node_stack)
@@ -205,7 +208,7 @@ def eval_node(
                         print('eval to:', node_eval_to[node])
 
         elif node.type == 'id':
-            obj = id_obj_table.setdefault(node.tok, NullObj())
+            obj = id_obj_table.get(node.tok, NullObj())
             if g_is_debug:
                 print('update id-obj table:', id_obj_table)
             node_eval_to[node] = obj

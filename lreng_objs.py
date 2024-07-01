@@ -1,6 +1,53 @@
 from fractions import Fraction
 from decimal import Decimal
-from typing import Optional, Union, Literal
+from typing import Optional, Literal, Union
+
+class Frame:
+    def __init__(self, local: dict | None = None, source: Union['Frame', None] = None):
+        if local is None:
+            self._local: dict = dict()
+        else:
+            self._local: dict = local.copy()
+        if source is None:
+            self._shared: Union['Frame', dict] = dict()
+        else:
+            self._shared: Union['Frame', dict] = source
+
+    def __getitem__(self, key):
+        if key in self._local:
+            return self._local[key]
+        if key in self._shared:
+            return self._shared[key]
+        raise KeyError(f'Key {repr(key)} not found')
+
+    def __setitem__(self, key, value):
+        if key in self._shared:
+            self._shared[key] = value
+        else:
+            self._local[key] = value
+
+    def __contains__(self, key):
+        return key in self._local or key in key in self._shared
+
+    def __repr__(self):
+        return repr(self.to_dict())
+    
+    def to_dict(self) -> dict:
+        result = self._local.copy()
+        if isinstance(self._shared, dict):
+            result.update(self._shared)
+        elif isinstance(self._shared, Frame):
+            result.update(self._shared.to_dict())
+        else:
+            raise ValueError('self._shared is not dict or Frame')
+        return result
+    
+    def get(self, key, value):
+        if key in self._local:
+            return self._local[key]
+        if key in self._shared:
+            return self._shared[key]
+        return value
 
 class GeneralObj:
     pass
@@ -10,8 +57,8 @@ class TreeNode:
                  left = None, right = None) -> None:
         self.tok = tok
         self.type = node_type
-        self.left: Optional[TreeNode] = left
-        self.right: Optional[TreeNode] = right
+        self.left: TreeNode | None = left
+        self.right: TreeNode | None = right
         self.eval_to: Optional[GeneralObj] = None
 
     def __repr__(self):
@@ -46,7 +93,7 @@ class NullObj(GeneralObj):
         return self.value == other.value
 
 class NumObj(GeneralObj):
-    def __init__(self, init_value: Union[float, Decimal, str]) -> None:
+    def __init__(self, init_value: float | Decimal | str) -> None:
         self.value = Fraction(init_value)
     
     def __bool__(self) -> bool:
@@ -66,12 +113,12 @@ class FuncObj(GeneralObj):
     def __init__(
             self,
             code_root_node: TreeNode,
-            id_obj_table: dict,
+            id_obj_table: Frame,
             arg_id: Optional[str] = None) -> None:
         self.arg_id = arg_id
         self.code_root_node = code_root_node
         # the reference of the id-obj table at the same scope of the function
-        # so that it can so recursion and access variable from outside
+        # so that it can do recursion and access variable from outside
         self.id_obj_table = id_obj_table
     
     def __bool__(self) -> bool:
